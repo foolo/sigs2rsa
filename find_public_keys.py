@@ -54,6 +54,8 @@ def call_solver_and_process_result(dsp: Dsp, msg1: MsgInfo, msg2: MsgInfo, logle
     cmd = [
         "docker",
         "run",
+        "--interactive",
+        "--attach=STDOUT",
         "--rm",
         "--mount",
         f"type=bind,source={os.getcwd()},target=/app",
@@ -69,10 +71,13 @@ def call_solver_and_process_result(dsp: Dsp, msg1: MsgInfo, msg2: MsgInfo, logle
         base64.b64encode(msg1.signature).decode('utf-8'),
         base64.b64encode(msg2.signedData).decode('utf-8'),
         base64.b64encode(msg2.signature).decode('utf-8'),
+        '',
     ]
     logging.debug(" ".join(cmd) + ' [... data parameters ...]')
+    from subprocess import Popen, PIPE
+    p = Popen(cmd, stdout=PIPE, stdin=PIPE, stderr=PIPE, text=True)
+    output, output_err = p.communicate(input="\n".join(data_parameters))
 
-    output = subprocess.check_output(cmd + data_parameters)
     data = json.loads(output)
     n = int(data['n_hex'], 16)
     e = int(data['e_hex'], 16)
